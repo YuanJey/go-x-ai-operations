@@ -31,6 +31,7 @@ Provider Adapter 接入。
 
 ## 文档
 
+- [使用说明与 X OAuth 登录](docs/usage.md)
 - [产品与规则设计](docs/design.md)
 - [系统架构设计](docs/architecture.md)
 
@@ -67,6 +68,9 @@ go run ./cmd/xops server -config ./config/default.yaml
 默认以 `dry_run` 运行，控制台地址：
 
 <http://127.0.0.1:8787>
+
+账号、模型、信息源、X Developer App 和 OAuth 登录的完整配置步骤见
+[使用说明](docs/usage.md)。
 
 运行数据写入 `./var/xops.db`，该目录已被 Git 忽略。默认规则位于
 [`config/rules.yaml`](config/rules.yaml)，运行配置位于
