@@ -1,0 +1,56 @@
+server:
+  listen: "127.0.0.1:8787"
+  shutdown_timeout: "30s"
+
+storage:
+  database_path: "./var/xops.db"
+
+runtime:
+  dry_run: true
+  worker_id: "local-1"
+  poll_interval: "2s"
+  lease_duration: "2m"
+  batch_size: 8
+
+account:
+  id: "default"
+  handle: "@example"
+  timezone: "Asia/Shanghai"
+
+sources: []
+
+rules:
+  bootstrap_file: "./config/rules.yaml"
+
+llm:
+  default_profile: "local"
+  request_timeout: "90s"
+  profiles:
+    local:
+      protocol: "openai_compatible"
+      base_url: "http://127.0.0.1:11434/v1"
+      model: "configured-local-model"
+      location: "local"
+      capabilities: ["json_object"]
+  routing:
+    default: ["local"]
+
+x:
+  base_url: "https://api.x.com/2"
+  oauth_authorize_url: "https://x.com/i/oauth2/authorize"
+  oauth_token_url: "https://api.x.com/2/oauth2/token"
+  oauth_redirect_url: "http://127.0.0.1:8787/api/v1/oauth/callback"
+  client_id: ""
+  credential_ref: "keychain://xops/oauth-refresh"
+
+metering:
+  currency: "USD"
+  x_unit_cost:
+    post_create: 0.015
+    reply_create: 0.010
+
+backup:
+  enabled: true
+  directory: "./var/backups"
+  interval: "24h"
+  retain: 7

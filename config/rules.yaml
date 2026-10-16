@@ -1,0 +1,97 @@
+config:
+  version: 1
+  effective_at: "2026-10-17T00:00:00+08:00"
+
+account:
+  handle: "@example"
+  language: "zh-CN"
+  timezone: "Asia/Shanghai"
+  audience: "关注 AI 工程实践的开发者和技术管理者"
+  promise: "每天提供一个可直接复用的 AI 工程经验"
+  voice: ["直接", "有证据", "不夸张"]
+  forbidden_topics: ["未披露广告", "未经证实的爆料"]
+
+content_policy:
+  allow_urls: true
+  allow_media: false
+  allow_threads: false
+  approval_mode: "automatic_policy_gate"
+  pillars:
+    - name: "实战方法"
+      initial_weight: 0.40
+    - name: "案例拆解"
+      initial_weight: 0.30
+    - name: "行业观点"
+      initial_weight: 0.20
+    - name: "幕后过程"
+      initial_weight: 0.10
+
+engagement:
+  enabled: true
+  reply_mode: "summoned_only"
+  require_original_author_summon: true
+  allow_unsolicited_replies: false
+  allow_direct_messages: false
+  allow_quote_posts: false
+  allow_mentions_outside_thread: false
+
+automation:
+  mode: "full_auto_rule_driven"
+  x_write_channel: "official_api"
+  oauth_scopes: ["tweet.read", "tweet.write", "users.read", "offline.access"]
+
+actions:
+  source_collect:
+    enabled: true
+    trigger: "interval"
+    every: "30m"
+    max_concurrency: 2
+    retry: {max_attempts: 3, backoff: "exponential"}
+  topic_generate:
+    enabled: true
+    trigger: "quota"
+    quota: {per_day: 30}
+    schedule: {windows: ["00:00-06:00"]}
+    max_concurrency: 1
+  publish_post:
+    enabled: true
+    trigger: "quota"
+    quota: {per_day: 10}
+    schedule:
+      timezone: "Asia/Shanghai"
+      days: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+      windows: ["08:00-23:00"]
+    cooldown:
+      min_interval: "60m"
+      same_topic: "24h"
+    queue:
+      max_pending: 20
+      max_age: "24h"
+      overflow: "drop_oldest"
+    retry: {max_attempts: 2, backoff: "platform_aware"}
+  sync_mentions:
+    enabled: true
+    trigger: "interval"
+    every: "15m"
+    max_concurrency: 1
+  publish_reply:
+    enabled: true
+    trigger: "quota"
+    quota: {per_day: 5}
+    schedule: {windows: ["08:00-23:00"]}
+    cooldown:
+      min_interval: "30m"
+      same_user: "24h"
+    retry: {max_attempts: 1, backoff: "platform_aware"}
+  sync_account_metrics:
+    enabled: true
+    trigger: "interval"
+    every: "24h"
+  sync_post_metrics:
+    enabled: true
+    trigger: "delayed"
+    after_publish: ["1h", "24h", "168h"]
+  update_strategy:
+    enabled: true
+    trigger: "cron"
+    expression: "0 2 * * 1"

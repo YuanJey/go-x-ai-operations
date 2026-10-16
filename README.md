@@ -42,9 +42,55 @@ Provider Adapter 接入。
 4. 使用 X 官方 API，不模拟鼠标、复用 Cookie 或规避平台限制。
 5. 凭证异常、平台拒绝或发布结果不确定时默认停止。
 
-## 建议实施顺序
+## 当前实现
 
-1. MVP：OAuth、本地 Agent、规则引擎、自动审批和定时发布。
-2. 互动闭环：召唤资格检查、提及分流、评论撰写和回复规则。
-3. 可靠性：不确定发布对账、token 轮换、告警和审计。
-4. 增长闭环：最小指标采集、实验归因和策略自动调权。
+- Go 单进程、本地 HTTP 控制台和 SQLite WAL 持久化
+- 不可变规则版本、定时激活、回滚、槽位计算和原子配额
+- SQLite Jobs、Lease 恢复、队列溢出、Transactional Outbox 和审计
+- OpenAI-compatible、Ollama Native、Anthropic、Gemini Provider Adapter
+- Agent JSON Schema 校验、一次修复调用、运行记录和模型回退
+- 动态选题、写作、事实核验、政策、相似度、编辑和自动审批工作流
+- 召唤资格、提及去重、回复决策、对话保护和独立 Reply Publisher
+- OAuth 2.0 PKCE、macOS Keychain、X API Adapter 和 Rate Limit Store
+- Post/Reply Operation 状态机、不确定写入对账和 dry-run Adapter
+- 账号/动态指标、策略建议、费用账本、告警和 SQLite 完整性备份
+
+## 本地运行
+
+要求 Go 1.25 或更高版本。
+
+```bash
+go test ./...
+go run ./cmd/xops server -config ./config/default.yaml
+```
+
+默认以 `dry_run` 运行，控制台地址：
+
+<http://127.0.0.1:8787>
+
+运行数据写入 `./var/xops.db`，该目录已被 Git 忽略。默认规则位于
+[`config/rules.yaml`](config/rules.yaml)，运行配置位于
+[`config/default.yaml`](config/default.yaml)。
+
+默认 Provider 指向 `http://127.0.0.1:11434/v1`。需要将
+`llm.profiles.local.model` 改为实际模型名；也可以增加远程 Profile，并用
+`keychain://service/account` 引用 API Key。开发环境还支持 `env://NAME`，
+但生产配置应使用 OS Keychain。
+
+## 接入真实 X
+
+1. 将 `runtime.dry_run` 改为 `false`。
+2. 设置 `x.client_id`、OAuth 回调地址和 Keychain refresh token 引用。
+3. 在 X Developer Portal 配置完全一致的 OAuth 回调地址。
+4. 启动服务后，通过控制台对应 API 发起 PKCE 授权。
+5. 确认 scope 包含 `tweet.read`、`tweet.write`、`users.read` 和
+   `offline.access`。
+
+系统不会把 token、API Key、X 密码或浏览器 Cookie 写入 SQLite。
+
+## 上线闸门
+
+代码已提供完整 dry-run 链路，但真实账号上线前仍必须完成架构文档定义的
+7 天无人值守验证，重点确认 `10 条/天` 无突发补发、无重复发布、召唤回复
+边界、Provider 故障回退和不确定写入对账。该验证需要真实模型和目标环境，
+不应由单次本地测试替代。
